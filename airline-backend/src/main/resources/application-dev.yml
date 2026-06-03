@@ -1,0 +1,25 @@
+# =============================================
+#   DEV PROFILE — local overrides only
+#   Activate: --spring.profiles.active=dev
+# =============================================
+
+spring:
+  jpa:
+    show-sql: true
+
+  # Use H2 in-memory only for unit tests (not this profile)
+  # Dev runs against real local PostgreSQL via Docker
+
+logging:
+  level:
+    com.airline: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# Override JWT secret for local dev (never commit real secrets)
+jwt:
+  secret: dev-only-secret-key-at-least-256-bits-long-replace-for-prod
+
+# Shorter seat lock for dev testing
+airline:
+  seat-lock:
+    ttl-minutes: 2

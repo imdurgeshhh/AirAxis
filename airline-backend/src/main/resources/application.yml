@@ -1,0 +1,126 @@
+# =============================================
+#   AIRLINE RESERVATION SYSTEM - CONFIG
+# =============================================
+
+spring:
+  application:
+    name: airline-reservation-system
+
+  # ---- PostgreSQL ----
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/airline_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # ---- JPA / Hibernate ----
+  jpa:
+    hibernate:
+      ddl-auto: validate          # Flyway handles schema — never use create/update in prod
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  # ---- Flyway (DB Migrations) ----
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # ---- Redis (Seat Locking) ----
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  # ---- RabbitMQ (Async Notifications) ----
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: /
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000ms
+          max-attempts: 3
+          multiplier: 2.0
+
+  # ---- Email ----
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:your-email@gmail.com}
+    password: ${MAIL_PASSWORD:your-app-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# ---- Server ----
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# ---- JWT ----
+jwt:
+  secret: ${JWT_SECRET:airline-super-secret-key-change-this-in-production-minimum-256-bits}
+  expiration-ms: 86400000        # 24 hours
+  refresh-expiration-ms: 604800000  # 7 days
+
+# ---- App Custom Config ----
+airline:
+  seat-lock:
+    ttl-minutes: 10              # Seats locked for 10 min during checkout
+  booking:
+    pnr-length: 6
+  payment:
+    stripe-secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
+    stripe-webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+  cors:
+    allowed-origins:
+      - http://localhost:5173    # Vite dev server
+      - http://localhost:3000
+      - ${FRONTEND_URL:https://your-production-domain.com}
+
+# ---- Actuator ----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# ---- Logging ----
+logging:
+  level:
+    com.airline: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
